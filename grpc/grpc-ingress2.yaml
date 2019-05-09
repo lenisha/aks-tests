@@ -1,0 +1,26 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+    #nginx.ingress.kubernetes.io/rewrite-target: /$2
+  name: fortune-ingress2
+  namespace: default
+spec:
+  rules:
+  - host: svc2.l6.altostratus.me
+    http:
+      paths:
+      - path: /          
+        backend:
+          serviceName: fortune-teller-service2
+          servicePort: grpc
+  tls:
+  # This secret must exist beforehand
+  # The cert must also contain the subj-name fortune-teller.stack.build
+  # https://github.com/kubernetes/ingress-nginx/blob/master/docs/examples/PREREQUISITES.md#tls-certificates
+  - secretName: tls-secret
+    hosts:
+      - svc2.l6.altostratus.me

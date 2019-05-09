@@ -1,0 +1,25 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+  name: yages-ingress
+  namespace: default
+spec:
+  rules:
+  - host: l6.altostratus.me
+    http:
+      paths:
+      - path: /yages.Echo
+        backend:
+          serviceName: yages
+          servicePort: http
+  tls:
+  # This secret must exist beforehand
+  # The cert must also contain the subj-name fortune-teller.stack.build
+  # https://github.com/kubernetes/ingress-nginx/blob/master/docs/examples/PREREQUISITES.md#tls-certificates
+  - secretName: tls-secret
+    hosts:
+      - l6.altostratus.me
