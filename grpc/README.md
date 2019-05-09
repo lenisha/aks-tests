@@ -29,6 +29,20 @@ openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out
 kubectl create secret tls tls-secret --key tls.key --cert tls.crt
 ```
 
+### Add DNS record to point to ingress
+Get IP of the Ingress service
+
+```
+kubectl get services -n ingress-nginx
+NAME            TYPE           CLUSTER-IP    EXTERNAL-IP     PORT(S)                      AGE
+ingress-nginx   LoadBalancer   10.0.224.50   13.82.193.239   80:30824/TCP,443:30301/TCP   1d
+```
+
+Add to hosts or A Record to DNS provider
+```
+l6.altostratus.me 13.82.193.239
+```
+
 ## Install GRPC Applications and test
 
 ### Install grpc Applications
