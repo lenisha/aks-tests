@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-whitelist
+  namespace: development
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  # KubeDNS for resolution
+  - to: 
+    ports:
+    - port: 53
+      protocol: UDP
+    - port: 53
+      protocol: TCP
+  # https://samples.openweathermap.org/data/2.5/weather?q=London,uk
+  - to:
+    - ipBlock:
+        cidr: 138.201.197.100/32
+  - to:
+    - ipBlock:
+        cidr: 168.63.129.16/32
+
