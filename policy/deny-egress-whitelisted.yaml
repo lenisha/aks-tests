@@ -19,7 +19,10 @@ spec:
   - to:
     - ipBlock:
         cidr: 138.201.197.100/32
-  - to:
+  # https://api.openfigi.com/schema
+  - to: 
     - ipBlock:
-        cidr: 168.63.129.16/32
-
+        cidr: 69.191.255.166/32
+    ports:
+    - port: 443
+      protocol: TCP    
