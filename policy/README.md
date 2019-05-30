@@ -32,8 +32,8 @@ spec:
     - port: 443
       protocol: TCP    
 ```
-This example policy applies to namespace "development" and all pods since `podselector: {}` is empty inclusing all.
-and it specifies egress rule to only allow DNS ports and two specific services
+This example policy applies to namespace "development" and all pods since `podselector: {}` is all inclusive.
+It specifies egress rule to only allow DNS ports and two specific services
 
 
 [AKS Network policies](https://docs.microsoft.com/en-us/azure/aks/use-network-policies)
