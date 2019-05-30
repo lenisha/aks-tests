@@ -4,8 +4,5 @@ metadata:
   name: backend-policy
   namespace: development
 spec:
-  podSelector:
-    matchLabels:
-      app: webapp
-      role: backend
+  podSelector: {}
   ingress: []

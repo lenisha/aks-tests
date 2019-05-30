@@ -1,0 +1,12 @@
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: frontend-policy
+spec:
+  podSelector:
+    matchLabels:
+      tier: frontend
+  ingress:
+    - from:
+        - ipBlock: #AKS Subnet and ILB SourceIP
+            cidr: 172.18.0.0/24
