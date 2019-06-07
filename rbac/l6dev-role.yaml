@@ -1,0 +1,18 @@
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: l6dev
+rules:
+# CRUD rights on Pods and ConfigMaps in the namespace
+# TODO: deployments, replicasets, etc
+- apiGroups: [""]
+  resources: ["pods","configmaps"]
+  verbs: ["get", "list","watch","create","update","patch","delete"]
+# view logs
+- apiGroups: [""]
+  resources: ["pods/log","events"]
+  verbs: ["get", "list","watch"]
+# port forward
+- apiGroups: [""]
+  resources: ["pods/portforward"]
+  verbs: ["get", "list", "create"]  
