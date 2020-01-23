@@ -1,0 +1,11 @@
+{
+    "bindings": [
+      {
+        "name": "keda",
+        "type": "queueTrigger",
+        "direction": "in",
+        "queueName": "queue-items",
+        "connection": "AzureWebJobsStorage"
+      }
+    ]
+  }

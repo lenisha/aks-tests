@@ -1,0 +1,87 @@
+#Docker ACR Build
+az login
+az acr build --registry acraccess --image cloudquery:latest .
+
+# PODS
+kubectl run webapp-color --image=kodekloud/webapp-color --restart=Never --env=APP_COLOR=pink --port=8080
+
+# Create Deployment
+kubectl run webapp-color --image=kodekloud/webapp-color --restart=Always  --env=APP_COLOR=green --port=8080 --dry-run -o yaml > webapp-color.ya
+ml > webapp-color.yaml
+
+kubectl apply -f webapp-color.yaml
+
+# Expose thru localport forward 
+kubectl port-forward deployment/webapp-color 8080
+
+# Expose as Load Balancer 
+kubectl expose deployment/webapp-color --type=LoadBalancer --name=webapp-color-svc
+
+# Scale deployment 
+kubectl scale deploy webapp-color --replicas=6
+
+#create ConfigMAp
+kubectl create cm webapp-color --from-literal=APP_COLOR=green
+
+# update yaml with ConfigMap ref color to new one
+# Rolling Update
+kubectl patch deployment webapp-color -p \
+  "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"date\":\"`date +'%s'`\"}}}}}"
+
+# Rollouts history 
+kubectl rollout history deployment.v1.apps/webapp-color
+
+
+#PVC Dynamic
+kubectl apply -f pvcfiles.yaml
+kubectl describe pvc azurefiles
+kubectl apply -f podpvc.yaml
+
+#see output and created file in storage
+kubectl exec -it dynamic-app-   --command -- 
+cat /data/out.txt
+
+
+
+# Scaling
+
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+helm install orders-mongo stable/mongodb --set mongodbUsername=orders-user,mongodbPassword=orders-password,mongodbDatabase=akschallenge
+kubectl run --namespace hpa orders-mongo-mongodb-client --rm --tty -i --restart='Never' --image bitnami/mongodb --command -- 
+mongo admin --host orders-mongo-mongodb --authenticationDatabase admin -u root -p $MONGODB_ROOT_PASSWORD
+kubectl create secret generic mongodb --from-literal=mongoHost="orders-mongo2-mongodb.default.svc.cluster.local" --from-literal=mongoUser="orders-user" --from-literal=mongoPassword="orders-password"
+
+
+kubectl create secret generic mongodb --from-literal=mongoHost="demomongo.documents.azure.com" --from-literal=mongoUser="demomongo" --from-literal=mongoPassword="VP9g3duJuSdaSqsn0oFoeR8CquDD7fQowaIYMO04SkN7uTxgdDF7eYJ52QKSFNl5s6BKfimPC1Ckg0QlFTtnbA=="
+
+# install API and service
+kubectl apply -f captureorder-deployment.yaml
+kubectl apply -f captureservice.yaml
+
+#see API
+kubectl get pods -l app=captureorder 
+kubectl get svc
+
+#import image
+az acr import --name=acraccess --source=docker.io/azch/loadtest --image=azch/loadtest
+# LOAD TEST
+az container create -g aks-tests -n loadtestrbc --location westus --image azch/loadtest --restart-policy Never -e SERVICE_ENDPOINT=http://40.81.14.240
+az container logs -g aks-tests -n loadtestrbc
+az container delete -g aks-tests -n loadtestrbc
+
+
+#KEDA
+func init . --docker
+func kubernetes install --namespace keda
+func start
+
+#KEDA deploy
+kubectl get customresourcedefinition
+#Build and deploy
+docker login acraccess.azurecr.io
+docker build -t acraccess.azurecr.io/hello-keda C:\projects\RBC\aks-tests\demos\keda
+docker push acraccess.azurecr.io/hello-keda
+
+func kubernetes deploy --name hello-keda --registry acraccess.azurecr.io --dry-run -o yaml > deploy.yaml
+#DEPLOY
+func kubernetes deploy --name hello-keda --registry acraccess.azurecr.io

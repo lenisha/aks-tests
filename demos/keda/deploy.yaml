@@ -1,0 +1,57 @@
+data:
+  AzureWebJobsStorage: RGVmYXVsdEVuZHBvaW50c1Byb3RvY29sPWh0dHBzO0FjY291bnROYW1lPWV2ZW50c2tlZGE7QWNjb3VudEtleT1yQmNqbGliTFhGZVdrcUhnTE05R3JDMysxMWpDRDhTNEU1bnltRmlmY21pT0hwb0x6YWtldUN1Y016NWpicTBnNE96R094YkVudisyRVA0L1RwRnZxZz09O0VuZHBvaW50U3VmZml4PWNvcmUud2luZG93cy5uZXQ=
+  FUNCTIONS_WORKER_RUNTIME: ZG90bmV0
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hello-keda
+  namespace: default
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-keda
+  namespace: default
+  labels:
+    app: hello-keda
+spec:
+  selector:
+    matchLabels:
+      app: hello-keda
+  template:
+    metadata:
+      labels:
+        app: hello-keda
+    spec:
+      containers:
+      - name: hello-keda
+        image: acraccess.azurecr.io/hello-keda
+        env:
+        - name: AzureFunctionsJobHost__functions__0
+          value: keda
+        envFrom:
+        - secretRef:
+            name: hello-keda
+---
+apiVersion: keda.k8s.io/v1alpha1
+kind: ScaledObject
+metadata:
+  name: hello-keda
+  namespace: default
+  labels:
+    deploymentName: hello-keda
+spec:
+  scaleTargetRef:
+    deploymentName: hello-keda
+  cooldownPeriod: 60
+  maxReplicaCount: 10  
+  triggers:
+  - type: azure-queue
+    metadata:
+      type: queueTrigger
+      connection: 'AzureWebJobsStorage'
+      queueName: queue-items
+      name: myQueueItem
+      queueLength: 2
+---
+

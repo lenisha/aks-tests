@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: captureorder-aci
+spec:
+  selector:
+      matchLabels:
+        app: captureorder-aci
+  
+  template:
+      metadata:
+        labels:
+            app: captureorder-aci
+      spec:
+        containers:
+        - name: captureorder
+          image: azch/captureorder
+          imagePullPolicy: Always
+          readinessProbe:
+            httpGet:
+              port: 8080
+              path: /healthz
+          livenessProbe:
+            httpGet:
+              port: 8080
+              path: /healthz
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+          env:
+          - name: MONGOHOST
+            valueFrom:
+              secretKeyRef:
+                name: mongodb
+                key: mongoHost
+          - name: MONGOUSER
+            valueFrom:
+              secretKeyRef:
+                name: mongodb
+                key: mongoUser
+          - name: MONGOPASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mongodb
+                key: mongoPassword
+          ports:
+          - containerPort: 8080
+        nodeSelector:
+          kubernetes.io/role: agent
+          beta.kubernetes.io/os: linux
+          type: virtual-kubelet
+        tolerations:
+        - key: virtual-kubelet.io/provider
+          operator: Exists
+        - key: azure.com/aci
+          effect: NoSchedule  
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: captureorder-aci
+spec:
+  selector:
+    app: captureorder-aci
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: LoadBalancer
