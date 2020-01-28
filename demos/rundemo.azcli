@@ -52,7 +52,7 @@ mongo admin --host orders-mongo-mongodb --authenticationDatabase admin -u root -
 kubectl create secret generic mongodb --from-literal=mongoHost="orders-mongo2-mongodb.default.svc.cluster.local" --from-literal=mongoUser="orders-user" --from-literal=mongoPassword="orders-password"
 
 
-kubectl create secret generic mongodb --from-literal=mongoHost="demomongo.documents.azure.com" --from-literal=mongoUser="demomongo" --from-literal=mongoPassword="VP9g3duJuSdaSqsn0oFoeR8CquDD7fQowaIYMO04SkN7uTxgdDF7eYJ52QKSFNl5s6BKfimPC1Ckg0QlFTtnbA=="
+kubectl create secret generic mongodb --from-literal=mongoHost="demomongo.documents.azure.com" --from-literal=mongoUser="demomongo" --from-literal=mongoPassword="xxxkey"
 
 # install API and service
 kubectl apply -f captureorder-deployment.yaml
