@@ -43,7 +43,26 @@ az container logs -g aks-tests -n loadtestrbc
 az container delete -g aks-tests -n loadtestrbc
 
 kubectl describe hpa
+kubectl get hpa
 
+# ingress
+# install
+helm repo add stable https://kubernetes-charts.storage.googleapis.com/
+helm repo update
+helm install nginx-ingress stable/nginx-ingress     --namespace ingress     --set controller.replicaCount=2     --set controller.nodeSelector."b
+eta\.kubernetes\.io/os"=linux     --set defaultBackend.nodeSelector."beta\.kubernetes\.io/os"=linux
+
+kubectl get service nginx-ingress-controller --namespace ingress
+
+# add to ingress
+kubectl apply -f webapp-color-ingress.yaml
+# verify http://frontend.52.177.149.91.nip.io/
+
+# Apply new service and switch ingress
+kubectl apply -f webapp-color-bluegreen.yaml
+
+
+#==================================================
 # Scaling Workshop
 
 helm repo add stable https://kubernetes-charts.storage.googleapis.com/
@@ -51,7 +70,6 @@ helm install orders-mongo stable/mongodb --set mongodbUsername=orders-user,mongo
 kubectl run --namespace hpa orders-mongo-mongodb-client --rm --tty -i --restart='Never' --image bitnami/mongodb --command -- 
 mongo admin --host orders-mongo-mongodb --authenticationDatabase admin -u root -p $MONGODB_ROOT_PASSWORD
 kubectl create secret generic mongodb --from-literal=mongoHost="orders-mongo2-mongodb.default.svc.cluster.local" --from-literal=mongoUser="orders-user" --from-literal=mongoPassword="orders-password"
-
 
 kubectl create secret generic mongodb --from-literal=mongoHost="demomongo.documents.azure.com" --from-literal=mongoUser="demomongo" --from-literal=mongoPassword="xxxkey"
 
