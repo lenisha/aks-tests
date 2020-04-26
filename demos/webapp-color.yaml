@@ -12,32 +12,38 @@ spec:
       run: webapp-color
   strategy: 
     type: RollingUpdate
-    #rollingUpdate:
-    #  maxSurge: 1
-    #  maxUnavailable: 0
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
   template:
     metadata:
-      creationTimestamp: null
-      labels:
-        run: webapp-color
+       labels:
+         run: webapp-color
     spec:
       containers:
       - env:
         - name: APP_COLOR
-          valueFrom:
-            configMapKeyRef: 
-              name: webapp-color
-              key: APP_COLOR
+          value: green
+          #valueFrom:
+          #  configMapKeyRef: 
+          #    name: webapp-color
+          #    key: APP_COLOR
         image: kodekloud/webapp-color
         name: webapp-color
         ports:
         - containerPort: 8080
-        # livenessProbe:
-        #   httpGet:
-        #     path: /
-        #     port: 8080
-        # readinessProbe:
-        #   httpGet:
-        #     path: /
-        #     port: 8080    
-
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080 
+        resources:    
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"

@@ -1,13 +1,15 @@
 #Docker ACR Build
 az login
-az acr build --registry acraccess --image cloudquery:latest .
+# az account set --subscription f869415f-5cff-46a3-b728-20659d14d62d
+az acr build --registry acraccess -g aks-tests --image cloudquery:latest .
 
 # PODS
 kubectl run webapp-color --image=kodekloud/webapp-color --restart=Never --env=APP_COLOR=pink --port=8080
+kubectl exec -it webapp-color -- sh
+kubectl delete pod webapp-color
 
 # Create Deployment
-kubectl run webapp-color --image=kodekloud/webapp-color --restart=Always  --env=APP_COLOR=green --port=8080 --dry-run -o yaml > webapp-color.ya
-ml > webapp-color.yaml
+kubectl run webapp-color --image=kodekloud/webapp-color --restart=Always  --env=APP_COLOR=green --port=8080 --dry-run -o yaml > webapp-color.yaml
 
 kubectl apply -f webapp-color.yaml
 
