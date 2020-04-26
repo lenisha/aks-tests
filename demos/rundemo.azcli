@@ -1,7 +1,7 @@
 #Docker ACR Build
 az login
 # az account set --subscription f869415f-5cff-46a3-b728-20659d14d62d
-az acr build --registry acraccess -g aks-tests --image cloudquery:latest .
+az acr build --registry acraccess -g aks-tests --image loadtest:latest .
 
 # PODS
 kubectl run webapp-color --image=kodekloud/webapp-color --restart=Never --env=APP_COLOR=pink --port=8080
@@ -17,7 +17,7 @@ kubectl apply -f webapp-color.yaml
 kubectl port-forward deployment/webapp-color 8080
 
 # Expose as Load Balancer 
-kubectl expose deployment/webapp-color --type=LoadBalancer --name=webapp-color-svc
+kubectl expose deployment/webapp-color --type=LoadBalancer --name=webapp-color-svc --port=8080
 
 # Scale deployment 
 kubectl scale deploy webapp-color --replicas=6
@@ -30,22 +30,21 @@ kubectl create cm webapp-color --from-literal=APP_COLOR=green
 kubectl patch deployment webapp-color -p \
   "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"date\":\"`date +'%s'`\"}}}}}"
 
+ kubectl rollout restart deploy
+
 # Rollouts history 
 kubectl rollout history deployment.v1.apps/webapp-color
 
+# Scaling Color
+# LOAD TEST
+kubectl apply -f webapp-color-hpa.yaml
+az container create -g aks-tests -n loadtestrbc --location westus --image acraccess.azurecr.io/loadtest:latest --restart-policy Never -e SERVICE_ENDPOINT=http://52.177.150.141:8080  --registry-username acraccess 
+az container logs -g aks-tests -n loadtestrbc
+az container delete -g aks-tests -n loadtestrbc
 
-#PVC Dynamic
-kubectl apply -f pvcfiles.yaml
-kubectl describe pvc azurefiles
-kubectl apply -f podpvc.yaml
+kubectl describe hpa
 
-#see output and created file in storage
-kubectl exec -it dynamic-app-   --command -- 
-cat /data/out.txt
-
-
-
-# Scaling
+# Scaling Workshop
 
 helm repo add stable https://kubernetes-charts.storage.googleapis.com/
 helm install orders-mongo stable/mongodb --set mongodbUsername=orders-user,mongodbPassword=orders-password,mongodbDatabase=akschallenge
@@ -71,6 +70,16 @@ az container create -g aks-tests -n loadtestrbc --location westus --image azch/l
 az container logs -g aks-tests -n loadtestrbc
 az container delete -g aks-tests -n loadtestrbc
 
+
+
+# PVC Dynamic - Storage
+kubectl apply -f pvcfiles.yaml
+kubectl describe pvc azurefiles
+kubectl apply -f podpvc.yaml
+
+# see output and created file in storage
+kubectl exec -it dynamic-app-   --command -- 
+cat /data/out.txt
 
 #KEDA
 func init . --docker

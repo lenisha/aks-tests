@@ -13,7 +13,7 @@ spec:
   strategy: 
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1
+      maxSurge: 2
       maxUnavailable: 0
   template:
     metadata:
@@ -23,11 +23,11 @@ spec:
       containers:
       - env:
         - name: APP_COLOR
-          value: green
-          #valueFrom:
-          #  configMapKeyRef: 
-          #    name: webapp-color
-          #    key: APP_COLOR
+          #value: green
+          valueFrom:
+            configMapKeyRef: 
+              name: webapp-color
+              key: APP_COLOR
         image: kodekloud/webapp-color
         name: webapp-color
         ports:
@@ -43,7 +43,7 @@ spec:
         resources:    
           requests:
             memory: "64Mi"
-            cpu: "250m"
+            cpu: "50m"
           limits:
-            memory: "128Mi"
-            cpu: "500m"
+            memory: "64Mi"
+            cpu: "50m"
