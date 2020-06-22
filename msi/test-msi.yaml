@@ -1,0 +1,26 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    run: testmsi
+  name: testmsi
+ 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: testmsi
+  template:
+    metadata:
+      labels:
+        aadpodidbinding: demoidentity
+        run: testmsi
+    spec:
+      containers:
+      - args:
+        - sleep
+        - "1000000"
+        image: radial/busyboxplus:curl
+        imagePullPolicy: Always
+        name: testmsi
+      restartPolicy: Always
