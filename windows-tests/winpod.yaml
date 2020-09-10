@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: hellowindows
+  name: hellowindows
+spec:
+  containers:
+  - image: acraccess.azurecr.io/hellowinaspnet
+    name: hellowindows
+    resources: 
+      requests:
+        cpu: 500m
+        memory: 100Mi
+      limits:
+         cpu: 500m
+         memory: 200Mi  
+  nodeSelector: 
+    kubernetes.io/os: windows
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
+

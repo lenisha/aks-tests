@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: hellolinux
+  name: hellolinux
+spec:
+  containers:
+  - image: acraccess.azurecr.io/cloudquery
+    name: hellolinux
+    resources: 
+      requests:
+        cpu: 500m
+        memory: 100Mi
+      limits:
+         cpu: 500m
+         memory: 200Mi  
+  nodeSelector: 
+    kubernetes.io/os: linux
+  dnsPolicy: ClusterFirst
+  restartPolicy: Always
+status: {}
