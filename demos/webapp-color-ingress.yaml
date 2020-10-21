@@ -6,7 +6,7 @@ metadata:
     kubernetes.io/ingress.class: nginx
 spec:
   rules:
-  - host: frontend.52.177.149.91.nip.io 
+  - host: frontend.20.151.73.181.nip.io 
     http:
       paths:
       - backend:

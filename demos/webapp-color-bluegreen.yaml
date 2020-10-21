@@ -24,7 +24,7 @@ spec:
       - env:
         - name: APP_COLOR
           value: green
-        image: kodekloud/webapp-color
+        image: acraccess.azurecr.io/webapp-color
         name: webapp-color
         ports:
         - containerPort: 8080

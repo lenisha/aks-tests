@@ -4,12 +4,12 @@ az login
 az acr build --registry acraccess -g aks-tests --image loadtest:latest .
 
 # PODS
-kubectl run webapp-color --image=kodekloud/webapp-color --restart=Never --env=APP_COLOR=pink --port=8080
+kubectl run webapp-color --image=acraccess.azurecr.io/webapp-color --restart=Never --env=APP_COLOR=pink --port=8080
 kubectl exec -it webapp-color -- sh
 kubectl delete pod webapp-color
 
 # Create Deployment
-kubectl run webapp-color --image=kodekloud/webapp-color --restart=Always  --env=APP_COLOR=green --port=8080 --dry-run -o yaml > webapp-color.yaml
+kubectl run webapp-color --image=acraccess.azurecr.io/webapp-color --restart=Always  --env=APP_COLOR=green --port=8080 --dry-run -o yaml > webapp-color.yaml
 
 kubectl apply -f webapp-color.yaml
 
@@ -18,6 +18,7 @@ kubectl port-forward deployment/webapp-color 8080
 
 # Expose as Load Balancer 
 kubectl expose deployment/webapp-color --type=LoadBalancer --name=webapp-color-svc --port=8080
+# verify http://20.151.81.133:8080
 
 # Scale deployment 
 kubectl scale deploy webapp-color --replicas=6
@@ -27,43 +28,47 @@ kubectl create cm webapp-color --from-literal=APP_COLOR=green
 
 # update yaml with ConfigMap ref color to new one
 # Rolling Update
-kubectl patch deployment webapp-color -p \
-  "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"date\":\"`date +'%s'`\"}}}}}"
+ kubectl rollout restart deploy webapp-color
 
- kubectl rollout restart deploy
+# Rollouts history and status
+kubectl rollout history deploy/webapp-color
+kubectl rollout status -w deployment/webapp-color
 
-# Rollouts history 
-kubectl rollout history deployment.v1.apps/webapp-color
 
 # Scaling Color
 # LOAD TEST
 kubectl apply -f webapp-color-hpa.yaml
-az container create -g aks-tests -n loadtestrbc --location westus --image acraccess.azurecr.io/loadtest:latest --restart-policy Never -e SERVICE_ENDPOINT=http://52.177.150.141:8080  --registry-username acraccess 
-az container logs -g aks-tests -n loadtestrbc
-az container delete -g aks-tests -n loadtestrbc
+artillery quick --count 200 -n 200 http://20.151.81.133:8080/
+
 
 kubectl describe hpa
 kubectl get hpa
 
 # ingress
 # install
-helm repo add stable https://kubernetes-charts.storage.googleapis.com/
-helm repo update
-helm install nginx-ingress stable/nginx-ingress     --namespace ingress     --set controller.replicaCount=2     --set controller.nodeSelector."b
-eta\.kubernetes\.io/os"=linux     --set defaultBackend.nodeSelector."beta\.kubernetes\.io/os"=linux
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx/
+helm install  ingress-nginx ingress-nginx/ingress-nginx --namespace ingress
 
 kubectl get service nginx-ingress-controller --namespace ingress
 
 # add to ingress
 kubectl apply -f webapp-color-ingress.yaml
-# verify http://frontend.52.177.149.91.nip.io/
+# verify http://frontend.20.151.73.181.nip.io 
 
 # Apply new service and switch ingress
 kubectl apply -f webapp-color-bluegreen.yaml
 
 
+
+
 #==================================================
 # Scaling Workshop
+
+# LOADTEST
+az container create -g aks-tests -n loadtestrbc --location westus --image acraccess.azurecr.io/loadtest:latest --restart-policy Never -e SERVICE_ENDPOINT=http://52.177.150.141:8080  --registry-username acraccess 
+az container logs -g aks-tests -n loadtestrbc
+az container delete -g aks-tests -n loadtestrbc
+
 
 helm repo add stable https://kubernetes-charts.storage.googleapis.com/
 helm install orders-mongo stable/mongodb --set mongodbUsername=orders-user,mongodbPassword=orders-password,mongodbDatabase=akschallenge

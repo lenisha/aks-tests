@@ -28,7 +28,7 @@ spec:
              configMapKeyRef: 
                name: webapp-color
                key: APP_COLOR
-        image: kodekloud/webapp-color
+        image: acraccess.azurecr.io/webapp-color
         name: webapp-color
         ports:
         - containerPort: 8080
@@ -47,7 +47,7 @@ spec:
         resources:    
           requests:
             memory: "64Mi"
-            cpu: "50m"
+            cpu: "100m"
           limits:
-            memory: "64Mi"
-            cpu: "50m"
+            memory: "128Mi"
+            cpu: "100m"
