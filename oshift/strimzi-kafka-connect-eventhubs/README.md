@@ -8,7 +8,7 @@ This test used Azure SQL MI instance and as per docs on Debezium (Azure SQL is n
 
 - Enable CDC Capture as per docs: [CDC with ADF ](https://docs.microsoft.com/en-us/azure/data-factory/tutorial-incremental-copy-change-tracking-feature-portal)
 
-```
+```sql
 create table Persons
 (
     PersonID int NOT NULL,
@@ -47,7 +47,7 @@ To install Kafka connect we will use popular Strimzi operator but will only use 
 
 - Option2. Install operator using Helm or YAML manifests
 Described in  [Kafka Connect the eay way](https://itnext.io/kafka-connect-on-kubernetes-the-easy-way-b5b617b7d5e9)
-```
+```sh
 //add helm chart repo for Strimzi
 helm repo add strimzi https://strimzi.io/charts/
 //install it! (I have used strimzi-kafka as the release name)
@@ -55,7 +55,7 @@ helm install strimzi-kafka strimzi/strimzi-kafka-operator
 ```
 or [Running Debezium on OpenShift](https://debezium.io/documentation/reference/operations/openshift.html)
 
-``` 
+```sh
 export STRIMZI_VERSION=0.19.0
 git clone -b $STRIMZI_VERSION https://github.com/strimzi/strimzi-kafka-operator
 cd strimzi-kafka-operator
@@ -71,7 +71,7 @@ KafkaConnect Loads Connectors from its internal `plugin.path`. Debezium is the m
 
 The default KafkaConnect image does not include Debezium connector so we need extend the image. `Dockerfile` in this repo demonstrates the technique, using as base image versions that installed Operator supports:
 
-```
+```Dockerfile
 FROM strimzi/kafka:0.19.0-kafka-2.5.0
 USER root:root
 RUN mkdir -p /opt/kafka/plugins/debezium
@@ -99,14 +99,14 @@ Now we need to setup KafkaConnect worker to be able to talk to Azure EventHubs a
 
 - Create Credentials for Connector to authenticate to Azure SQL MI, replace in `sqlserver-credentials.properties` fields for `database.password` and user and create a secret:
 
-```
+```sh
 oc -n cdc-kafka create secret generic sql-credentials --from-file=sqlserver-credentials.properties
 ```
 
 - Create KafkaConnect worker Cluster, using the image that was created in the step above
 
 
-```
+```yaml
 apiVersion: kafka.strimzi.io/v1beta1
 kind: KafkaConnect
 metadata:
@@ -169,26 +169,25 @@ update:
 - `image` with your connector image
 
 - Apply the manifest
-```
+```sh
 oc apply -f kafka-connect.yaml -n cdc-kafka
 ```
 
 - Verify that KafkaConnect Cluster is running
 
-```
+```sh
 $ oc get pods -n cdc-kafka
 NAME                                                     READY   STATUS    RESTARTS   AGE
 kafka-connect-cluster-debezium-connect-bdd84fd96-vj2p9   1/1     Running   0          33m
 strimzi-cluster-operator-v0.19.0-7d4f9f5cbf-cxxlx        1/1     Running   0          14h
 
-eneros@MININT-KRE3N7E MINGW64 /c/projects/RBC/aks-tests/oshift/strimzi-kafka-connect-eventhubs (master)
 $ oc get svc -n cdc-kafka
 NAME                                         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
 kafka-connect-cluster-debezium-connect-api   ClusterIP   172.30.109.146   <none>        8083/TCP   33m
 ```
 
 Connect to the KafkaConnect Server and verify that SQl Connector plugin is loaded and available:
-```
+```sh
 oc exec -i -n cdc-kafka kafka-connect-cluster-debezium-connect-6668b7d974-wcgnf -- curl -X GET http://kafka-connect-cluster-debezium-connect-api:808
 3/connector-plugins | jq .
 
@@ -227,13 +226,16 @@ oc exec -i -n cdc-kafka kafka-connect-cluster-debezium-connect-6668b7d974-wcgnf 
 
 ```
 
-## Install SQL Connector
+Once the KafkaConnect Cluster started it will create topics for its internal operations:
+![Docs](./images/KafkaConnectTopics.png)
+
+## Install Debezium SQL Connector
 
 Now we will configure and  install SQLConnector instance. It's typically done using REST api but Strimzi Operator automated it using K8S CRD objects.
 
 Make sure `labels` is pointing to the KafkaConnect cluster we created in the step above
 
-```
+```yaml
 apiVersion: kafka.strimzi.io/v1alpha1
 kind: KafkaConnector
 metadata:
@@ -259,8 +261,102 @@ spec:
 
 - replace `database.hostname`, `database.dbname` and `database.server.name` with details of your SQL Server
 
-and install the connector
+and install and verify the connector is up and running:
+
+```sh
+> oc apply -f sqlserver-connector.yaml -n cdc-kafka
+> oc get kctr azure-sql-connector -o yaml -n cdc-kafka
+
+apiVersion: kafka.strimzi.io/v1alpha1
+kind: KafkaConnector
+metadata:
+status:
+  connectorStatus:
+    connector:
+      state: RUNNING
+      worker_id: 10.129.2.28:8083
+    name: azure-sql-connector
+    tasks:
+    - id: 0
+      state: RUNNING
+      worker_id: 10.129.2.28:8083
+    type: source
+  observedGeneration: 1
+  tasksMax: 1
 ```
-oc delete -f sqlserver-connector.yaml -n cdc-kafka
+
+and verify using Connect API:
+
+```sh
+oc exec -i -n cdc-kafka  kafka-connect-cluster-debezium-connect-5d96664b98-tn5j7 -- curl -X GET http://kafka-connect-cluster-debezium-connect-api:8083/c
+onnectors | jq .
+ 
+[
+  "azure-sql-connector"
+]
 ```
-# Test
+
+## Test
+
+Debezium SQL Connector creates topics for schema and table updates:
+
+![Docs](./images/KafkaTopicsCDC.png)
+
+For testing we will use `kafkacat` to monitor the Azure Event Hubs.
+
+
+- configure the connection details for `kafkacat` in `~/.config/kafkacat.conf` 
+
+```properties
+metadata.broker.list=kafkastore.servicebus.windows.net:9093
+security.protocol=SASL_SSL
+sasl.mechanisms=PLAIN
+sasl.username=$ConnectionString
+sasl.password=Endpoint=sb://kafkastore.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=xxxx
+socket.timeout.ms=30000
+metadata.request.timeout.ms=30000
+```
+
+- Listen to topic for events from Azure Event Hubs, topic name is in pattern `servername.dbtable`
+
+```sh
+kafkacat -C -b kafkastore.servicebus.windows.net:9093 -t cdctestsmi.dbo.Persons -o beginning
+```
+
+- insert the data into the `Persons` table
+```sql
+INSERT INTO Persons (PersonID,Name, Age) VALUES (7, 'Targarien', 125);
+```
+
+And see the event apper in the topic:
+```json
+{"schema":{"type":"struct","fields":[{"type":"struct","fields":[{"type":"int32","optional":false,"field":"PersonID"},{"type":"string","optional":true,"field":"Name"},{"type":"int32","optional":true,"field":"Age"}],"optional":true,"name":"cdctestsmi.dbo.Persons.Value","field":"before"},{"type":"struct","fields":[{"type":"int32","optional":false,"field":"PersonID"},{"type":"string","optional":true,"field":"Name"},{"type":"int32","optional":true,"field":"Age"}],"optional":true,"name":"cdctestsmi.dbo.Persons.Value","field":"after"},{"type":"struct","fields":[{"type":"string","optional":false,"field":"version"},{"type":"string","optional":false,"field":"connector"},{"type":"string","optional":false,"field":"name"},{"type":"int64","optional":false,"field":"ts_ms"},{"type":"string","optional":true,"name":"io.debezium.data.Enum","version":1,"parameters":{"allowed":"true,last,false"},"default":"false","field":"snapshot"},{"type":"string","optional":false,"field":"db"},{"type":"string","optional":false,"field":"schema"},{"type":"string","optional":false,"field":"table"},{"type":"string","optional":true,"field":"change_lsn"},{"type":"string","optional":true,"field":"commit_lsn"},{"type":"int64","optional":true,"field":"event_serial_no"}],"optional":false,"name":"io.debezium.connector.sqlserver.Source","field":"source"},{"type":"string","optional":false,"field":"op"},{"type":"int64","optional":true,"field":"ts_ms"},{"type":"struct","fields":[{"type":"string","optional":false,"field":"id"},{"type":"int64","optional":false,"field":"total_order"},{"type":"int64","optional":false,"field":"data_collection_order"}],"optional":true,"field":"transaction"}],"optional":false,"name":"cdctestsmi.dbo.Persons.Envelope"},"payload":{
+    "before":null,
+    "after":{"PersonID":7,"Name":"Targarien","Age":125},
+    "source":{"version":"1.3.0.Final","connector":"sqlserver","name":"cdctestsmi","ts_ms":1603986207443,"snapshot":"false","db":"cdcKafka","schema":"dbo","table":"Persons","change_lsn":"0000002b:000004f8:0004","commit_lsn":"0000002b:000004f8:0005","event_serial_no":1},"op":"c","ts_ms":1603986211338,"transaction":null}}
+```
+
+## Troubleshooting
+
+To see the output of the SQL Connector and KafkaConnect monitor the logs:
+
+```sh
+ oc logs kafka-connect-cluster-debezium-connect-5d96664b98-tn5j7 -n cdc-kafka --tail 200 -f
+```
+
+You could dynamically change verbosity for the various components as described in this article: [Changing KafkaConnect logging dynamically](https://rmoff.net/2020/01/16/changing-the-logging-level-for-kafka-connect-dynamically/)
+
+```sh
+# exec into the pod
+oc exec -it -n cdc-kafka kafka-connect-cluster-debezium-connect-6668b7d974-wcgnf -- sh
+
+#change log level
+curl -s -X PUT -H "Content-Type:application/json"  http://kafka-connect-cluster-debezium-connect-api:8083/admin/loggers/io.debezium -d '{"level": "TRACE"}'
+curl -s -X PUT -H "Content-Type:application/json"  http://kafka-connect-cluster-debezium-connect-api:8083/admin/loggers/org.apache.kafka.connect.runtime.WorkerSourceTask -d '{"level": "TRACE"}'
+curl -s -X PUT -H "Content-Type:application/json"  http://kafka-connect-cluster-debezium-connect-api:8083/admin/loggers/org.apache.kafka.clients.NetworkClient -d '{"level": "DEBUG"}'
+```
+
+Known bugs with history table and workaround:
+
+https://github.com/Azure/azure-event-hubs-for-kafka/issues/53
+https://github.com/Azure/azure-event-hubs-for-kafka/issues/61
