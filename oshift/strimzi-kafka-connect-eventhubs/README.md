@@ -1,5 +1,18 @@
 # Streaming CDC changes to Azure Event Hubs using Strimzi and Debezium
 
+Table of contents
+=================
+
+<!--ts-->
+   * [Create SQL DB and enable CDC](#create-sql-db-and-enable-cdc)
+   * [Create Azure EventHubs](#create-azure-eventhubs)
+   * [Install Strimzi Kafka Operator](#install-strimzi-operator)
+   * [Prepare KafkaConnect Image with Debezium Plugin](#prepare-kafka-connect-image-with-debezium-plugin)
+   * [Install KafkaConnect](#install-kafka-connect)
+   * [Install Debezium SQL Connector](#install-debezium-sql-connector)
+   * [Test](#test)
+ <!--te-->
+
 # Create SQL DB and enable CDC
 This test used Azure SQL MI instance and as per docs on Debezium (Azure SQL is not yet supported)
 
@@ -359,4 +372,5 @@ curl -s -X PUT -H "Content-Type:application/json"  http://kafka-connect-cluster-
 Known bugs with history table and workaround:
 
 https://github.com/Azure/azure-event-hubs-for-kafka/issues/53
+
 https://github.com/Azure/azure-event-hubs-for-kafka/issues/61
