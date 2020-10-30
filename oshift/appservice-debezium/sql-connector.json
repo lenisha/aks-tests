@@ -1,0 +1,19 @@
+{
+    "name": "azure-sql-connector",
+    "config": {
+        "connector.class" : "io.debezium.connector.sqlserver.SqlServerConnector",
+
+        "database.hostname": "cdctestsmi.public.144a376e88cf.database.windows.net",
+        "database.port": "3342",
+        "database.dbname": "cdcKafka",
+        "database.server.name": "cdctestsmi",
+        "database.user": "XXXX",
+        "database.password": "XXXX",
+        "table.include.list": "dbo.Customers",
+        "include.schema.changes": "true", 
+        "database.history": "io.debezium.relational.history.MemoryDatabaseHistory",
+        "tasks.max" : "1",                
+        "database.history.kafka.bootstrap.servers" : "kafkastore.servicebus.windows.net:9093",
+        "database.history.kafka.topic": "cdc-updates"      
+     }
+}
