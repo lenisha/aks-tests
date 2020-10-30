@@ -6,11 +6,12 @@ Table of contents
 <!--ts-->
    * [Create SQL DB and enable CDC](#create-sql-db-and-enable-cdc)
    * [Create Azure EventHubs](#create-azure-eventhubs)
-   * [Install Strimzi Kafka Operator](#install-strimzi-operator)
-   * [Prepare KafkaConnect Image with Debezium Plugin](#prepare-kafka-connect-image-with-debezium-plugin)
-   * [Install KafkaConnect](#install-kafka-connect)
-   * [Install Debezium SQL Connector](#install-debezium-sql-connector)
-   * [Test](#test)
+   * [Local Test using DockerCompose](#local-test-using-dockercompose)
+   * [Register SQL Connector for Azure MI instance](#register-sql-connector-for-azure-mi-instance)
+   * [Monitor Changes with kafkacat](#monitor-changes-with-kafkacat)
+   * [Create App Service](#create-app-service)
+   * [AppService with MultiContainer](#appservice-with-multicontainer)
+   * [AppService with Single Docker Container](#appservice-with-single-docker-container)
  <!--te-->
 
 
@@ -271,6 +272,8 @@ and test with `kafkacat`
 ## AppService with Single Docker Container
 
 While Docker Compose version provides quick and easy test, for Production sceanrios its recommended to use single container 
+
+
 ![Docs](./images/App-Single.png)
 
 And provide all variables as Application settings
