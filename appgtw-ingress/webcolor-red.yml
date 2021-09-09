@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    run: webapp-red
+  name: webapp-red
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: webapp-red
+  strategy: 
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+       labels:
+         run: webapp-red
+    spec:
+      containers:
+      - env:
+        - name: APP_COLOR
+          value: red
+        image: acraccess.azurecr.io/webapp-color
+        name: webapp-red
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 2
+          periodSeconds: 2    
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080 
+          initialDelaySeconds: 2
+          periodSeconds: 2    
+        resources:    
+          requests:
+            memory: "64Mi"
+            cpu: "100m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    run: webapp-red
+  name: webapp-red
+spec:
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    run: webapp-red
+  sessionAffinity: None
+  type: ClusterIP
