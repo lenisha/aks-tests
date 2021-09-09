@@ -38,11 +38,11 @@ spec:
 
 Test urls for the three sample apps deployed:
 
-http://20.94.33.60/aspnet/ - works only with last trailing slash added
-http://20.94.33.60/aspnet/Privacy - works only when path has `*` in it
+- http://20.94.33.60/aspnet/ - works only with last trailing slash added
+- http://20.94.33.60/aspnet/Privacy - works only when path has `*` in it
 
-http://20.94.33.60/green  - green screen
-http://20.94.33.60/  - red screen
+- http://20.94.33.60/green  - green screen
+- http://20.94.33.60/  - red screen
 
 
 # Test 2 without *
@@ -77,8 +77,8 @@ spec:
         pathType: Prefix     
 ```
 
-http://20.94.33.60/aspnet - works without need for trailing slash 
-http://20.94.33.60/aspnet/Privacy - 404 - doe not route properly to the app
+- http://20.94.33.60/aspnet - works without need for trailing slash 
+- http://20.94.33.60/aspnet/Privacy - 404 - doe not route properly to the app
 
-http://20.94.33.60/green  - green screen
-http://20.94.33.60/  - red screen
+- http://20.94.33.60/green  - green screen
+- http://20.94.33.60/  - red screen
