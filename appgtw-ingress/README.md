@@ -1,6 +1,8 @@
 # Tests with AppGtwy Ingress controller 
 
-Reproducing the issue with ingress definition requiring `*` in the path
+Reproducing the issue with ingress definition requiring `*` in the path with TWO simple apps
+- NET Apps with two pages / and /Privacy
+- WebColor App with one colored page at /
 
 ## Test 1 with *
 
