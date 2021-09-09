@@ -1,6 +1,6 @@
 # Tests with AppGtwy Ingress controller 
 
-Reproducing the issue with ingress definition requiring `*` in the path with TWO simple apps
+Reproducing the issue with ingress definition requiring `*` (https://github.com/Azure/application-gateway-kubernetes-ingress/issues/1238)  in the path with TWO simple apps
 - ASPNET App with two pages / and /Privacy
 - WebColor App with one colored page at /
 
