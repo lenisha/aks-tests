@@ -12,11 +12,16 @@ spec:
   rules:
   - http:
       paths:
-      - path: /aspnet/*
+      - path: /aspnet
         backend:
           serviceName: aspnetapp
           servicePort: 80
         pathType: Prefix 
+      - path: /aspnet/*
+        backend:
+          serviceName: aspnetapp
+          servicePort: 80
+        pathType: Prefix   
       - path: /green
         backend:
           serviceName: webapp-color
